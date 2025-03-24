@@ -2,7 +2,7 @@ name: "CI - Test Features"
 on:
   push:
     branches:
-      - main
+      - master
   pull_request:
   workflow_dispatch:
 
@@ -13,8 +13,7 @@ jobs:
     strategy:
       matrix:
         features:
-          - color
-          - hello
+          - go-migrate
         baseImage:
           - debian:latest
           - ubuntu:latest
@@ -34,8 +33,7 @@ jobs:
     strategy:
       matrix:
         features:
-          - color
-          - hello
+          - go-migrate
     steps:
       - uses: actions/checkout@v4
 

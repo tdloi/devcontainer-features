@@ -1,0 +1,103 @@
+name: Sync Feature Versions
+
+on:
+  workflow_dispatch:
+    inputs:
+      feature_name:
+        description: 'Feature name'
+        required: true
+      release_url:
+        description: 'GitHub repository for releases (format: owner/repo)'
+        required: true
+      max_releases:
+        description: 'Maximum number of releases to include'
+        required: true
+        default: '5'
+  schedule:
+    - cron: '0 0 * * 0'  # Run weekly on Sunday at midnight
+
+jobs:
+  sync-versions:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        feature:
+          - name: go-migrate
+            release_url: golang-migrate/migrate
+            max_releases: 5
+          # Add more features here as needed
+          # - name: feature-name
+          #   release_url: owner/repo
+          #   max_releases: 5
+      fail-fast: false
+    
+    name: Sync ${{ matrix.feature.name }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Fetch releases and update JSON
+        id: sync
+        run: |
+          # Use workflow_dispatch inputs if available, otherwise use matrix values
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            FEATURE_NAME="${{ github.event.inputs.feature_name }}"
+            RELEASE_URL="${{ github.event.inputs.release_url }}"
+            MAX_RELEASES="${{ github.event.inputs.max_releases }}"
+          else
+            FEATURE_NAME="${{ matrix.feature.name }}"
+            RELEASE_URL="${{ matrix.feature.release_url }}"
+            MAX_RELEASES="${{ matrix.feature.max_releases }}"
+          fi
+          
+          # Generate target file path from feature name
+          TARGET_FILE="src/${FEATURE_NAME}/devcontainer-feature.json"
+          
+          echo "Syncing feature: ${FEATURE_NAME}"
+          echo "Target file: ${TARGET_FILE}"
+          echo "Fetching releases from $RELEASE_URL..."
+          
+          # Check if target file exists
+          if [ ! -f "$TARGET_FILE" ]; then
+            echo "Error: Target file $TARGET_FILE does not exist"
+            exit 1
+          fi
+          
+          # Fetch releases using GitHub API
+          RELEASES=$(curl -s "https://api.github.com/repos/$RELEASE_URL/releases" | jq -r '[.[].tag_name][0:'"$MAX_RELEASES"'] | map(select(. != null))')
+          
+          if [ -z "$RELEASES" ] || [ "$RELEASES" == "null" ]; then
+            echo "Failed to fetch releases or no releases found"
+            exit 1
+          fi
+          
+          echo "Found releases: $RELEASES"
+          
+          # Add 'latest' to the beginning of the array
+          PROPOSALS=$(echo '["latest"]' | jq ". + $RELEASES")
+          
+          echo "New proposals: $PROPOSALS"
+          
+          # Update the JSON file with 4-space indentation
+          jq --indent 4 --arg proposals "$PROPOSALS" '.options.version.proposals = ($proposals | fromjson)' "$TARGET_FILE" > temp.json
+          mv temp.json "$TARGET_FILE"
+          
+          # Check if there were changes
+          if git diff --quiet "$TARGET_FILE"; then
+            echo "No changes detected in $TARGET_FILE"
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "Updated proposals in $TARGET_FILE"
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "target_file=$TARGET_FILE" >> $GITHUB_OUTPUT
+            echo "feature_name=$FEATURE_NAME" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and push changes
+        if: steps.sync.outputs.changed == 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add "${{ steps.sync.outputs.target_file }}"
+          git commit -m "Update version proposals for ${{ steps.sync.outputs.feature_name }} [skip ci]"
+          git push
