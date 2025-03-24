@@ -1,5 +1,4 @@
 name: Sync Feature Versions
-
 on:
   workflow_dispatch:
     inputs:

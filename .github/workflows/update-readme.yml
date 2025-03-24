@@ -1,5 +1,4 @@
 name: Update README with Features
-
 on:
   workflow_dispatch:
   push:
@@ -7,8 +6,6 @@ on:
       - master
     paths:
       - 'src/*/devcontainer-feature.json'
-  schedule:
-    - cron: '0 0 * * 0'  # Run weekly on Sunday at midnight
 
 jobs:
   update-readme:
@@ -18,8 +15,7 @@ jobs:
       pull-requests: write
       packages: write
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Update README with features
         id: update-readme
