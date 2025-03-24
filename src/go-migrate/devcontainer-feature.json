@@ -2,7 +2,7 @@
     "name": "go-migrate",
     "id": "go-migrate",
     "version": "1.0.0",
-    "description": "Install go-migrate",
+    "description": "Install go-migrate. Database migrations",
     "options": {
         "version": {
             "type": "string",
