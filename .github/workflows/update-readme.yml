@@ -56,7 +56,7 @@ jobs:
             header_part=$(echo "$readme_content" | sed -n "1,/$intro_line/p")
 
             # Create the new README content with the updated feature list
-            new_content="${header_part}${FEATURE_LIST}"
+            new_content="${header_part}\n${FEATURE_LIST}"
 
             # Update README.md
             echo -e "$new_content" > README.md
