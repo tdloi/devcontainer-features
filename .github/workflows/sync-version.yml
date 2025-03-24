@@ -30,11 +30,11 @@ jobs:
           #   release_url: owner/repo
           #   max_releases: 5
       fail-fast: false
-    
+
     name: Sync ${{ matrix.feature.name }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Fetch releases and update JSON
         id: sync
@@ -49,39 +49,39 @@ jobs:
             RELEASE_URL="${{ matrix.feature.release_url }}"
             MAX_RELEASES="${{ matrix.feature.max_releases }}"
           fi
-          
+
           # Generate target file path from feature name
           TARGET_FILE="src/${FEATURE_NAME}/devcontainer-feature.json"
-          
+
           echo "Syncing feature: ${FEATURE_NAME}"
           echo "Target file: ${TARGET_FILE}"
           echo "Fetching releases from $RELEASE_URL..."
-          
+
           # Check if target file exists
           if [ ! -f "$TARGET_FILE" ]; then
             echo "Error: Target file $TARGET_FILE does not exist"
             exit 1
           fi
-          
+
           # Fetch releases using GitHub API
           RELEASES=$(curl -s "https://api.github.com/repos/$RELEASE_URL/releases" | jq -r '[.[].tag_name][0:'"$MAX_RELEASES"'] | map(select(. != null))')
-          
+
           if [ -z "$RELEASES" ] || [ "$RELEASES" == "null" ]; then
             echo "Failed to fetch releases or no releases found"
             exit 1
           fi
-          
+
           echo "Found releases: $RELEASES"
-          
+
           # Add 'latest' to the beginning of the array
           PROPOSALS=$(echo '["latest"]' | jq ". + $RELEASES")
-          
+
           echo "New proposals: $PROPOSALS"
-          
+
           # Update the JSON file with 4-space indentation
           jq --indent 4 --arg proposals "$PROPOSALS" '.options.version.proposals = ($proposals | fromjson)' "$TARGET_FILE" > temp.json
           mv temp.json "$TARGET_FILE"
-          
+
           # Check if there were changes
           if git diff --quiet "$TARGET_FILE"; then
             echo "No changes detected in $TARGET_FILE"
@@ -96,8 +96,16 @@ jobs:
       - name: Commit and push changes
         if: steps.sync.outputs.changed == 'true'
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
+          git config --global user.email github-actions[bot]@users.noreply.github.com
+          git config --global user.name github-actions[bot]
+          git config pull.rebase false
+
+          branch=automated-version-proposals-update-$GITHUB_RUN_ID
+          git checkout -b $branch
+
+          message='Automated version proposals update for ${{ steps.sync.outputs.feature_name }}'
           git add "${{ steps.sync.outputs.target_file }}"
-          git commit -m "Update version proposals for ${{ steps.sync.outputs.feature_name }} [skip ci]"
-          git push
+          git commit -m "Automated version proposals update for ${{ steps.sync.outputs.feature_name }} [skip ci]"
+          
+          git push origin $branch
+          gh pr create --title "$message" --body "$message"

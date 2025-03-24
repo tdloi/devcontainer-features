@@ -1,4 +1,4 @@
-name: Sync README with Features
+name: Update README with Features
 
 on:
   workflow_dispatch:
@@ -22,41 +22,41 @@ jobs:
         run: |
           # Generate feature list from all subdirectories in src
           FEATURE_LIST=""
-          
+
           # Loop through each directory in src
           for feature_dir in src/*/; do
             # Remove trailing slash and get the base name
             feature_name=$(basename "$feature_dir")
-            
+
             # Path to the feature's JSON file
             json_file="${feature_dir}devcontainer-feature.json"
-            
+
             if [ -f "$json_file" ]; then
               # Extract the description from the JSON file
               description=$(jq -r '.description' "$json_file")
-              
+
               # Add to the feature list with the format: - [feature](./src/feature): description
               FEATURE_LIST="${FEATURE_LIST}- [${feature_name}](./src/${feature_name}/): ${description}\n"
             fi
           done
-          
+
           # Read the current README.md
           readme_content=$(cat README.md)
-          
+
           # Find the line with "This repository contains a _collection_ of Features"
           intro_line="This repository contains a _collection_ of Features. Each sub-section below demonstrates the usage of a specific Feature."
-          
+
           # Create the new README content
           if [[ "$readme_content" == *"$intro_line"* ]]; then
             # Split the content at the intro line
             header_part=$(echo "$readme_content" | sed -n "1,/$intro_line/p")
-            
+
             # Create the new README content with the updated feature list
             new_content="${header_part}${FEATURE_LIST}"
-            
+
             # Update README.md
             echo -e "$new_content" > README.md
-            
+
             # Check if there were changes
             if git diff --quiet README.md; then
               echo "No changes to README.md"
@@ -73,8 +73,16 @@ jobs:
       - name: Commit and push changes
         if: steps.update-readme.outputs.changed == 'true'
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
+          git config --global user.email github-actions[bot]@users.noreply.github.com
+          git config --global user.name github-actions[bot]
+          git config pull.rebase false
+
+          branch=automated-readme-update-$GITHUB_RUN_ID
+          git checkout -b $branch
+
+          message='Automated README update'
           git add README.md
-          git commit -m "Update README with current features [skip ci]"
-          git push
+          git commit -m "Automated README update [skip ci]"
+
+          git push origin $branch
+          gh pr create --title "$message" --body "$message"
