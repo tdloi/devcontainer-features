@@ -32,6 +32,10 @@ jobs:
       fail-fast: false
 
     name: Sync ${{ matrix.feature.name }}
+    permissions:
+      contents: write
+      pull-requests: write
+      packages: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -94,6 +98,8 @@ jobs:
           fi
 
       - name: Commit and push changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         if: steps.sync.outputs.changed == 'true'
         run: |
           git config --global user.email github-actions[bot]@users.noreply.github.com
@@ -106,6 +112,6 @@ jobs:
           message='Automated version proposals update for ${{ steps.sync.outputs.feature_name }}'
           git add "${{ steps.sync.outputs.target_file }}"
           git commit -m "Automated version proposals update for ${{ steps.sync.outputs.feature_name }} [skip ci]"
-          
+
           git push origin $branch
           gh pr create --title "$message" --body "$message"

@@ -13,6 +13,10 @@ on:
 jobs:
   update-readme:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      packages: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -72,6 +76,8 @@ jobs:
 
       - name: Commit and push changes
         if: steps.update-readme.outputs.changed == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --global user.email github-actions[bot]@users.noreply.github.com
           git config --global user.name github-actions[bot]
