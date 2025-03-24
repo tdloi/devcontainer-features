@@ -20,6 +20,7 @@ jobs:
       - name: "Publish Features"
         uses: devcontainers/action@v1
         with:
+          publish-templates: "false"
           publish-features: "false"
           base-path-to-features: "./src"
           generate-docs: "true"
