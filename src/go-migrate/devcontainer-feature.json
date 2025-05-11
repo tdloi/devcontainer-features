@@ -10,11 +10,11 @@
             "description": "Select or enter a go-migrate version to install",
             "proposals": [
                 "latest",
+                "v4.18.3",
                 "v4.18.2",
                 "v4.18.1",
                 "v4.18.0",
-                "v4.17.1",
-                "v4.17.0"
+                "v4.17.1"
             ]
         }
     },
