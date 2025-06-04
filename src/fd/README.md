@@ -1,13 +1,13 @@
 
-# go-migrate (go-migrate)
+# fd (fd)
 
-Install go-migrate. Database migrations
+Install fd. A simple, fast and user-friendly alternative to 'find'
 
 ## Example Usage
 
 ```json
 "features": {
-    "ghcr.io/tdloi/devcontainer-features/go-migrate:1": {}
+    "ghcr.io/tdloi/devcontainer-features/fd:1": {}
 }
 ```
 
@@ -15,10 +15,10 @@ Install go-migrate. Database migrations
 
 | Options Id | Description | Type | Default Value |
 |-----|-----|-----|-----|
-| version | Select or enter a go-migrate version to install | string | latest |
+| version | Select or enter a fd version to install | string | latest |
 
 
 
 ---
 
-_Note: This file was auto-generated from the [devcontainer-feature.json](https://github.com/tdloi/devcontainer-features/blob/main/src/go-migrate/devcontainer-feature.json).  Add additional notes to a `NOTES.md`._
+_Note: This file was auto-generated from the [devcontainer-feature.json](https://github.com/tdloi/devcontainer-features/blob/main/src/fd/devcontainer-feature.json).  Add additional notes to a `NOTES.md`._
