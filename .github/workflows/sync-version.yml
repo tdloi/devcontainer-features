@@ -24,6 +24,9 @@ jobs:
           - name: go-migrate
             release_url: golang-migrate/migrate
             max_releases: 5
+          - name: fd
+            release_url: sharkdp/fd
+            max_releases: 5
           # Add more features here as needed
           # - name: feature-name
           #   release_url: owner/repo
